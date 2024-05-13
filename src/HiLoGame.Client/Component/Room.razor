@@ -62,7 +62,7 @@
     if (this.CurrentRoom.HiLoGame.GameStatus != GameStatus.GameStarted
         && this.CurrentRoom.HiLoGame.Player1 != this.CurrentPlayerId 
         && this.CurrentRoom.IsRoomFull())
-   {
+    {
        <br />
        <h4>Waiting for the owner of the room to start the game...</h4>
     }
@@ -96,14 +96,14 @@
 
         this.CurrentPlayerId = this.HubConnection.ConnectionId;
 
-        this.HubConnection.On<Player>("PlayerJoined", player =>
+        this.HubConnection.On<Player>(HubConstants.PlayerJoined, player =>
         {
             this.CurrentRoom.Players.Add(player);
 
             this.StateHasChanged();
         });
 
-        this.HubConnection.On<GameRoom>("GameUpdate", room =>
+        this.HubConnection.On<GameRoom>(HubConstants.GameUpdate, room =>
         {
             this.CurrentRoom = room;
 
@@ -120,7 +120,7 @@
 
         this.ClearFields();
 
-        await this.HubConnection.InvokeAsync("StartGame", this.CurrentRoom.Id);
+        await this.HubConnection.InvokeAsync(HubConstants.StartGame, this.CurrentRoom.Id);
     }
 
     private bool IsMyTurn()
@@ -137,7 +137,7 @@
             && this.Guess <= this.CurrentRoom.HiLoGame.MaxNumber)
         {
             this.CurrentRoom = await this.HubConnection.InvokeAsync<GameRoom>(
-                "MakeMove",
+                HubConstants.MakeMove,
                 this.CurrentRoom.Id,
                 this.Guess,
                 this.CurrentPlayerId);

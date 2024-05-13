@@ -31,20 +31,17 @@
         public async Task<GameRoom?> CreateRoom(string roomName, string playerName)
         {
             var roomId = Guid.NewGuid().ToString();
-            Console.WriteLine($"{roomId} : roomId");
-            Console.WriteLine($"{roomName} : roomName");
 
             var room = new GameRoom(roomId, roomName);
             rooms.Add(room);
 
             var player = new Player(this.Context.ConnectionId, playerName);
-            Console.WriteLine($"this.Context.ConnectionId: {this.Context.ConnectionId}");
-            Console.WriteLine($"playerName: {playerName}");
 
             room.TryAddPlayer(player);
 
             await this.Groups.AddToGroupAsync(this.Context.ConnectionId, roomId);
-            await this.Clients.All.SendAsync("Rooms", rooms);
+
+            await this.Clients.All.SendAsync(HubConstants.Rooms, rooms);
 
             return room;
         }
@@ -60,6 +57,7 @@
                 if (room.TryAddPlayer(player))
                 {
                     await this.Groups.AddToGroupAsync(this.Context.ConnectionId, roomId);
+
                     await this.Clients.Group(roomId).SendAsync(HubConstants.PlayerJoined, player);
 
                     return room;

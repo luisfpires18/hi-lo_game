@@ -50,7 +50,6 @@
             this.MaxNumber = maxNumber;
 
             this.MysteryNumber = this.GenerateMysteryNumber();
-            Console.WriteLine($"Mystery Number is: {this.MysteryNumber}");
         }
 
         public void ChangePlayer()

@@ -4,9 +4,16 @@
     {
         public static class HubConstants
         {
+            public const string URL = "/gamehub";
+
             public const string Rooms = nameof(Rooms);
             public const string PlayerJoined = nameof(PlayerJoined);
             public const string GameUpdate = nameof(GameUpdate);
+
+            public const string CreateRoom = nameof(CreateRoom);
+            public const string JoinRoom = nameof(JoinRoom);
+            public const string StartGame = nameof(StartGame);
+            public const string MakeMove = nameof(MakeMove);
         }
 
         public static class GameConstants

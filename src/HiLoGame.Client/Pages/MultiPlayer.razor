@@ -56,12 +56,10 @@ else
     protected override async Task OnInitializedAsync()
     {
         this.hubConnection = new HubConnectionBuilder()
-            .WithUrl(this.NavigationManager.ToAbsoluteUri("/gamehub"))
+            .WithUrl(this.NavigationManager.ToAbsoluteUri(HubConstants.URL))
             .Build();
 
-        Console.WriteLine($"URL: {this.NavigationManager.ToAbsoluteUri("/gamehub")}");
-
-        this.hubConnection.On<List<GameRoom>>("Rooms", (roomList) =>
+        this.hubConnection.On<List<GameRoom>>(HubConstants.Rooms, (roomList) =>
         {
             this.rooms = roomList;
 
@@ -80,32 +78,15 @@ else
 
     private async Task CreateRoom()
     {
-        Console.WriteLine("hub is null?: " + hubConnection is null);
-        Console.WriteLine("hub state: " + hubConnection?.State);
-        Console.WriteLine("hub id: " + hubConnection?.ConnectionId);
-
         if (this.hubConnection is null)
         {
             return;
         }
 
-        try
-        {
-            var room = await this.hubConnection.InvokeAsync<GameRoom>(
-               "CreateRoom",
-               this.currentRoomName,
-               this.playerName);
-
-            if( room is not null)
-            {
-                this.currentRoom = room;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error InvokeAsync CreateRoom: {ex.Message}");
-        }
-
+        this.currentRoom = await this.hubConnection.InvokeAsync<GameRoom>(
+            HubConstants.CreateRoom,
+            this.currentRoomName,
+            this.playerName);
     }
 
     private async Task JoinRoom(string id)
@@ -116,7 +97,7 @@ else
         }
 
         var joinedRoom = await this.hubConnection.InvokeAsync<GameRoom>(
-            "JoinRoom",
+            HubConstants.JoinRoom,
             id,
             this.playerName);
 

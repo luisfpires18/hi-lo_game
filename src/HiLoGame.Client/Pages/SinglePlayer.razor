@@ -11,10 +11,9 @@
     <h4>Guess the number between @MinNumber and @MaxNumber.</h4>
     <br />
     <label for="this.PlayerGuess">Enter your guess:</label>
-    <input @bind="this.PlayerGuess" placeholder="Your Guess" />
+    <input type="number" @bind="this.PlayerGuess" placeholder="Your Guess" />
     <button @onclick="GuessNumber">Submit Guess</button>
-    <br />
-    <br />
+    <hr />
 
     this.IsInvalid = this.PlayerGuess < this.MinNumber || this.PlayerGuess > this.MaxNumber;
 
@@ -36,7 +35,7 @@
         <h5>Bot Attemps made: @this.BotAttempts</h5>
     }
 }
-else if (this.Game.GameStatus == GameStatus.GameOver)
+else if (this.Game.IsGameOver())
 {
     if (this.BotVictory)
     {
@@ -103,7 +102,7 @@ else if (this.Game.GameStatus == GameStatus.GameOver)
         }
         else
         {
-            BotTurn();
+            this.BotTurn();
         }
     }
 

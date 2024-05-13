@@ -1,5 +1,6 @@
 using HiLoGame.Components;
 using HiLoGame.Hubs;
+using static HiLoGame.Domain.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,7 @@ else
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.MapHub<GameHub>("/gamehub");
+app.MapHub<GameHub>(HubConstants.URL);
 
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
