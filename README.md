@@ -1,10 +1,10 @@
-HiLo Game - A Guessing Game with Real-Time Multiplayer
+# HiLo Game
 
-Description:
+# Description:
 
 HiLo is a classic guessing game where you try to discover a secret number chosen by the system within a specified range. With this implementation, you can enjoy the game in three modes:
 
-Training: Practice your skills and learn the game mechanics without any opponent.
+Training: 
 Single Player: Challenge yourself against a BOT that reacts based on your guesses.
 Multi Player: Create a room in a lobby and invite friends to join you for a real-time guessing duel.
 Gameplay:
@@ -16,23 +16,27 @@ HI: The secret number is greater than your guess.
 LO: The secret number is less than your guess.
 Repeat: Keep guessing until you correctly identify the secret number.
 The goal is to find the secret number in the minimum number of attempts.
-Technical Stack:
 
-Frontend: Razor Web Apps
-Real-time Communication: SignalR
-(Optional) Additional Libraries/Technologies (list any specific ones used)
-Features:
+#Technical Stack:
 
-Multi-player support for fun and competitive play (if applicable)
-Responsive web design for a seamless experience across devices
-Note:
+This project was made using C# .NET with Razor Web Apps and SignalR for the multiplayer component.
+It was also containerized using docker.
 
-The single-player BOT currently lacks AI and reacts directly to player inputs.
-Getting Started:
+Note: The single-player BOT does not have any AI mechanism and will only react based on its inputs (higher/lower).
+
+#Getting Started:
 
 Running locally using docker:
 1 - On the root folder:
 
+```
 docker-compose up -d
+```
 
 2 - Open the web app at: http://localhost:5263
+
+3 - Training - Where you can see how the game works without any opponent.
+
+4 - Single Player - Where you will play against a bot.
+
+5 - Multi Player - Create a room in a lobby where other players can join you and duel.
