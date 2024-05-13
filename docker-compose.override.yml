@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  hilogame:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5263
+    ports:
+      - "5263:5263"

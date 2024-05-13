@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  hilogame:
+    image: ${DOCKER_REGISTRY-}hilogame
+    build:
+      context: .
+      dockerfile: Dockerfile

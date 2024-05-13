@@ -1,0 +1,162 @@
+﻿@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+@if(this.CurrentRoom is not null)
+{
+    <h1><b>Room:</b> @CurrentRoom.Name</h1>
+    <hr />
+
+    if (this.CurrentRoom.IsPlayerWaitingOpponent())
+    {
+        <h4>Waiting for the opponent...</h4>
+    }
+
+    if (this.CurrentRoom.HiLoGame!.IsGameOver())
+    {
+        <h4>Game Over.</h4>
+        <h4>Winner: @this.CurrentRoom.HiLoGame.Winner.Value! </h4>
+
+        if (this.CurrentPlayerId == this.CurrentRoom.HiLoGame.Winner.Key)
+        {
+            <h4>You guessed the mystery number [@this.Guess] in @this.Attempts attempts.</h4> 
+        }
+    }
+
+    if(this.CurrentRoom.HiLoGame.GameStatus != GameStatus.GameStarted &&
+        this.CurrentRoom.HiLoGame.Player1 == this.CurrentPlayerId &&
+        this.CurrentRoom.IsRoomFull())
+    {
+        <br />
+        <button @onclick="StartGame">Start Game</button>
+    }
+
+    if(this.CurrentRoom.HiLoGame.GameStatus == GameStatus.GameStarted)
+    {
+        <h4>Player1: <b>@this.CurrentRoom.Players[0].Name</b> vs Player2: <b>@this.CurrentRoom.Players[1].Name</b></h4>
+
+        <h4>It's your turn, @this.CurrentRoom.HiLoGame.PlayerTurn.</h4>
+
+        if(!this.IsMyTurn() && this.CurrentRoom.HiLoGame.GameStatus != GameStatus.GameOver)
+        {
+            <br />
+            <h4><i>Please wait for the opponent move.</i></h4>
+        }
+        else
+        {
+            <hr />
+            <h4>Guess the number between @this.CurrentRoom.HiLoGame.MinNumber and @this.CurrentRoom.HiLoGame.MaxNumber.</h4>
+            <br />
+            <label for="this.Guess">Enter your guess:</label>
+            <input @bind="this.Guess" type="number" placeholder="Your Guess" />
+            <button @onclick="MakeMove">Make a guess</button>
+            <br />
+        }
+
+        if (this.Result != null && this.Attempts > 0)
+        {
+            <h4>[@this.Guess] @this.Result</h4>
+            <h5>Attemps made: @this.Attempts</h5>
+        }
+
+    }
+    if (this.CurrentRoom.HiLoGame.GameStatus != GameStatus.GameStarted
+        && this.CurrentRoom.HiLoGame.Player1 != this.CurrentPlayerId 
+        && this.CurrentRoom.IsRoomFull())
+   {
+       <br />
+       <h4>Waiting for the owner of the room to start the game...</h4>
+    }
+
+    if (!string.IsNullOrEmpty(this.IsInvalid))
+    {
+        <h4>Invalid input, enter a valid number.</h4>
+    }
+}
+
+
+@code {
+    [CascadingParameter]
+    public HubConnection? HubConnection { get; set; }
+
+    [Parameter]
+    public GameRoom? CurrentRoom { get; set; }
+
+    private int Guess = default(int);
+    private int Attempts = default(int);
+    private string Result = string.Empty;
+    private string IsInvalid = string.Empty;
+    private string CurrentPlayerId { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (this.CurrentRoom is null || this.HubConnection is null || this.HubConnection.ConnectionId is null)
+        {
+            return;
+        }
+
+        this.CurrentPlayerId = this.HubConnection.ConnectionId;
+
+        this.HubConnection.On<Player>("PlayerJoined", player =>
+        {
+            this.CurrentRoom.Players.Add(player);
+
+            this.StateHasChanged();
+        });
+
+        this.HubConnection.On<GameRoom>("GameUpdate", room =>
+        {
+            this.CurrentRoom = room;
+
+            this.StateHasChanged();
+        });
+    }
+
+    private async Task StartGame()
+    {
+        if (this.HubConnection is null || this.CurrentRoom is null)
+        {
+            return;
+        }
+
+        this.ClearFields();
+
+        await this.HubConnection.InvokeAsync("StartGame", this.CurrentRoom.Id);
+    }
+
+    private bool IsMyTurn()
+    {
+        return this.CurrentPlayerId == this.CurrentRoom?.HiLoGame?.CurrentPlayerId;
+    }
+
+    private async Task MakeMove()
+    {
+        if(this.IsMyTurn()
+            && this.CurrentRoom?.HiLoGame?.GameStatus == GameStatus.GameStarted
+            && this.HubConnection is not null
+            && this.Guess >= this.CurrentRoom.HiLoGame.MinNumber
+            && this.Guess <= this.CurrentRoom.HiLoGame.MaxNumber)
+        {
+            this.CurrentRoom = await this.HubConnection.InvokeAsync<GameRoom>(
+                "MakeMove",
+                this.CurrentRoom.Id,
+                this.Guess,
+                this.CurrentPlayerId);
+
+            this.Attempts++;
+            this.IsInvalid = string.Empty;
+            this.Result = this.CurrentRoom.HiLoGame!.Result;
+        }
+        else
+        {
+            this.IsInvalid = "Invalid Input";
+        }
+    }
+
+    public void ClearFields()
+    {
+        this.Attempts = 0;
+        this.IsInvalid = string.Empty;
+        this.Result = string.Empty;
+        this.Guess = 0;
+    }
+}

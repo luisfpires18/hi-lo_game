@@ -1,0 +1,85 @@
+﻿@page "/training"
+@rendermode InteractiveWebAssembly
+@inject NavigationManager NavigationManager
+
+<PageTitle>Training</PageTitle>
+
+<h1>Hi-Lo Game - Training</h1>
+
+@if (this.Game!.GameStatus is GameStatus.WaitingToStart || this.Game.GameStatus is GameStatus.GameStarted)
+{
+    <h4>Guess the number between @this.MinNumber and @this.MaxNumber.</h4>
+    <br />
+    <label for="this.Guess">Enter your guess:</label>
+    <input type="number" @bind="this.Guess" placeholder="Your Guess" />
+    <button @onclick="GuessNumber">Submit Guess</button>
+    <hr />
+
+    this.IsInvalid = this.Guess < this.MinNumber || this.Guess > this.MaxNumber;
+
+    @if (this.IsInvalid)
+    {
+        if(this.Game.GameStatus == GameStatus.GameStarted)
+        {
+            <h4>Invalid Input.</h4>
+        }
+    } 
+    else if (this.Result != null && this.Attempts > 0)
+    {
+        <h4>@this.Result</h4>
+        <br />
+        <h5>Attemps made: @this.Attempts</h5>
+    }
+}
+else if (this.Game.GameStatus == GameStatus.GameOver)
+{
+    <hr />
+    <h2>Congratulations! You've guessed the mystery number @this.Guess in @this.Attempts attempts.</h2>
+
+    <button @onclick="PlayAgain">Play Again</button>
+}
+
+@code {
+    [Inject]
+    private IConfiguration Configuration { get; set; }
+
+    private int MinNumber = 1;
+    private int MaxNumber = 50;
+    private HiLoGame? Game;
+
+    private int Guess = default(int);
+    private string Result = string.Empty;
+    private int Attempts;
+    private bool IsInvalid;
+
+    protected override void OnInitialized()
+    {
+        this.Game = new HiLoGame();
+    }
+
+    private void GuessNumber()
+    {
+        if (this.IsInvalid || this.Game is null)
+        {
+            return;
+        }
+
+        if (this.Game.GameStatus == GameStatus.WaitingToStart)
+        {
+            this.Game.StartGame(this.MinNumber, this.MaxNumber);
+        }
+
+        this.Result = this.Game.CheckGuess(this.Guess);
+        this.Attempts++;
+
+        if (this.Result == GameConstants.CORRECT)
+        {
+            this.Game.GameStatus = GameStatus.GameOver;
+        }
+    }
+
+    private void PlayAgain()
+    {
+        NavigationManager.NavigateTo("/training", forceLoad: true);
+    }
+}

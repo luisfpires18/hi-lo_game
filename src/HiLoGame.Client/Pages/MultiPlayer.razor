@@ -1,0 +1,139 @@
+﻿@page "/multi"
+
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+<PageTitle>Lobby</PageTitle>
+
+@if(this.currentRoom is null)
+{
+    <h2>Lobby</h2>
+
+    <input @bind="this.playerName" placeholder="Your Name" />
+    <input @bind="this.currentRoomName" placeholder="Room" />
+
+    <button @onclick="CreateRoom" disabled="@(string.IsNullOrWhiteSpace(this.playerName) || string.IsNullOrWhiteSpace(this.currentRoomName))">
+        Create Room
+    </button>
+
+    @if (this.rooms.Any())
+    {
+        <hr />
+        <h2>Rooms</h2>
+
+        <ul>
+            @foreach (var room in this.rooms)
+            {
+                <li>
+                    @room.Name
+                    <button @onclick="() => JoinRoom(room.Id)" disabled="@string.IsNullOrWhiteSpace(this.playerName)">
+                        Join the Room
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+}
+else
+{
+    <CascadingValue Value="this.hubConnection">
+        <Room CurrentRoom="this.currentRoom" />
+    </CascadingValue>
+}
+
+
+@code{
+    private HubConnection? hubConnection;
+
+    private string playerName = string.Empty;
+
+    private string currentRoomName = string.Empty;
+
+    private GameRoom? currentRoom;
+
+    private List<GameRoom> rooms = new List<GameRoom>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.hubConnection = new HubConnectionBuilder()
+            .WithUrl(this.NavigationManager.ToAbsoluteUri("/gamehub"))
+            .Build();
+
+        Console.WriteLine($"URL: {this.NavigationManager.ToAbsoluteUri("/gamehub")}");
+
+        this.hubConnection.On<List<GameRoom>>("Rooms", (roomList) =>
+        {
+            this.rooms = roomList;
+
+            this.StateHasChanged();
+        });
+
+        try
+        {
+            await this.hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error starting HubConnection: {ex.Message}");
+        }
+    }
+
+    private async Task CreateRoom()
+    {
+        Console.WriteLine("hub is null?: " + hubConnection is null);
+        Console.WriteLine("hub state: " + hubConnection?.State);
+        Console.WriteLine("hub id: " + hubConnection?.ConnectionId);
+
+        if (this.hubConnection is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var room = await this.hubConnection.InvokeAsync<GameRoom>(
+               "CreateRoom",
+               this.currentRoomName,
+               this.playerName);
+
+            if( room is not null)
+            {
+                this.currentRoom = room;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error InvokeAsync CreateRoom: {ex.Message}");
+        }
+
+    }
+
+    private async Task JoinRoom(string id)
+    {
+        if (this.hubConnection is null)
+        {
+            return;
+        }
+
+        var joinedRoom = await this.hubConnection.InvokeAsync<GameRoom>(
+            "JoinRoom",
+            id,
+            this.playerName);
+
+        if (joinedRoom is not null)
+        {
+            this.currentRoom = joinedRoom;
+        }
+        else
+        {
+            var room = rooms.FirstOrDefault(r => r.Id == id);
+
+            if (room is not null)
+            {
+                rooms.Remove(room);
+            }
+
+            this.StateHasChanged();
+        }
+    }
+}
