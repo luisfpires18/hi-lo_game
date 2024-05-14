@@ -40,9 +40,6 @@ else if (this.Game.GameStatus == GameStatus.GameOver)
 }
 
 @code {
-    [Inject]
-    private IConfiguration Configuration { get; set; }
-
     private int MinNumber = 1;
     private int MaxNumber = 50;
     private HiLoGame? Game;
