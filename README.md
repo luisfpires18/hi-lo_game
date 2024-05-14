@@ -1,4 +1,4 @@
-# HiLo Game
+# Hi-Lo Game
 
 # Description:
 
