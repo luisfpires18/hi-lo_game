@@ -77,9 +77,10 @@ else if (this.Game.IsGameOver())
         this.Game = new HiLoGame();
         this.Opponent = new Bot();
         
-        this.PlayerGuess = this.MinNumber;
         this.BotMinNumber = this.MinNumber;
         this.BotMaxNumber = this.MaxNumber;
+
+        this.PlayerGuess = this.MinNumber;
         this.BotGuess = this.Random.Next(this.BotMinNumber, this.BotMaxNumber + 1);
     }
 

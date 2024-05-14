@@ -12,11 +12,13 @@
 
         private readonly int MaxNumber;
 
-        public GameHub(IConfiguration configuration)
+        public GameHub(IConfiguration configuration, IRangeValuesConfiguration rangeValuesConfiguration)
         {
-            var rangeValues = new RangeValues(configuration);
-            this.MinNumber = rangeValues.MinValue;
-            this.MaxNumber = rangeValues.MaxValue;
+            ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+            ArgumentNullException.ThrowIfNull(rangeValuesConfiguration, nameof(rangeValuesConfiguration));
+
+            this.MinNumber = rangeValuesConfiguration.MinValue;
+            this.MaxNumber = rangeValuesConfiguration.MaxValue;
         }
 
         private static readonly List<GameRoom> rooms = new List<GameRoom>();

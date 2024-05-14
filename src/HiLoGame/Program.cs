@@ -1,3 +1,4 @@
+using HiLoGame;
 using HiLoGame.Components;
 using HiLoGame.Hubs;
 using static HiLoGame.Domain.Constants;
@@ -12,6 +13,15 @@ builder
 builder
     .Services
     .AddSignalR();
+
+var rangeValuesConfiguration = builder.Configuration
+    .GetSection("RangeValues")
+    .Get<RangeValuesConfiguration>();
+
+if (rangeValuesConfiguration is not null)
+{
+    builder.Services.AddSingleton<IRangeValuesConfiguration>(rangeValuesConfiguration);
+}
 
 var app = builder.Build();
 
