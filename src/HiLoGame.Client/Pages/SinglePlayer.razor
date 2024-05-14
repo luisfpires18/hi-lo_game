@@ -39,11 +39,13 @@ else if (this.Game.IsGameOver())
 {
     if (this.BotVictory)
     {
-        <h2>You lost! Bot guessed the mystery number @this.BotGuess in @this.BotAttempts attempts.</h2>
+        <h2>You lose!</h2>
+        <h3>Bot guessed the mystery number @this.BotGuess in @this.BotAttempts attempts.</h3>
     }
     else
     {
-        <h2>Congratulations! You've guessed the mystery number @this.PlayerGuess in @this.PlayerAttempts attempts.</h2>
+        <h2>You win!</h2>
+        <h2>You've guessed the mystery number @this.PlayerGuess in @this.PlayerAttempts attempts.</h2>
     }
 
     <button @onclick="PlayAgain">Play Again</button>

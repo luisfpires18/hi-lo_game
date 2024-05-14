@@ -3,6 +3,7 @@ version: '3.8'
 services:
   hilogame:
     image: ${DOCKER_REGISTRY-}hilogame
+    container_name: hi-lo_game
     build:
       context: .
       dockerfile: Dockerfile

@@ -38,12 +38,10 @@
 
         if(!this.IsMyTurn() && this.CurrentRoom.HiLoGame.GameStatus != GameStatus.GameOver)
         {
-            <br />
             <h4><i>Please wait for the opponent move.</i></h4>
         }
         else
         {
-            <hr />
             <h4>Guess the number between @this.CurrentRoom.HiLoGame.MinNumber and @this.CurrentRoom.HiLoGame.MaxNumber.</h4>
             <br />
             <label for="this.Guess">Enter your guess:</label>
@@ -54,6 +52,7 @@
 
         if (this.Result != null && this.Attempts > 0)
         {
+            <hr />
             <h4>[@this.Guess] @this.Result</h4>
             <h5>Attemps made: @this.Attempts</h5>
         }
