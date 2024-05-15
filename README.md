@@ -49,10 +49,17 @@ Layer responsible for having unit tests to the major classes.
 # Getting Started:
 
 Running locally using docker:
+
 1 - On the root folder:
 
 ```
 docker-compose up -d
+```
+
+or
+
+```
+docker-compose up --build
 ```
 
 2 - Open the web app at: http://localhost:5263
