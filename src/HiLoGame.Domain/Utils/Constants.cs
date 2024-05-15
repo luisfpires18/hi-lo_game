@@ -24,6 +24,8 @@
 
             public const string Player1 = "Player 1";
             public const string Player2 = "Player 2";
+
+            public const int MAX_NUM_PLAYERS = 2;
         }
     }
 }

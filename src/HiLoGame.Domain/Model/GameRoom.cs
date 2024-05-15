@@ -1,7 +1,7 @@
 ﻿namespace HiLoGame.Domain
 {
     using System.Collections.Generic;
-    using System.Linq;
+    using static global::HiLoGame.Domain.Constants;
 
     public class GameRoom
     {
@@ -19,31 +19,6 @@
 
         public HiLoGame? HiLoGame { get; set; } = new HiLoGame();
 
-        private const int MAX_NUM_PLAYERS = 2;
-
-        public bool TryAddPlayer(Player player)
-        {
-            var playerIsNotOnRoom = this.Players.Any(p => p.Id == player.Id);
-
-            if (this.Players.Count < MAX_NUM_PLAYERS && !playerIsNotOnRoom && this.HiLoGame is not null)
-            {
-                this.Players.Add(player);
-
-                if (this.IsPlayerWaitingOpponent())
-                {
-                    this.HiLoGame.Player1 = player.Id;
-                }
-                else if (this.IsRoomFull())
-                {
-                    this.HiLoGame.Player2 = player.Id;
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
         public bool IsPlayerWaitingOpponent()
         {
             return this.Players.Count == 1;
@@ -51,7 +26,7 @@
 
         public bool IsRoomFull()
         {
-            return this.Players.Count == MAX_NUM_PLAYERS;
+            return this.Players.Count == GameConstants.MAX_NUM_PLAYERS;
         }
     }
 }

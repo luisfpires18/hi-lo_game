@@ -1,6 +1,8 @@
 using HiLoGame;
 using HiLoGame.Components;
+using HiLoGame.Domain.Interfaces;
 using HiLoGame.Hubs;
+using HiLoGame.Infrastructure.Repositories;
 using static HiLoGame.Domain.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,8 @@ if (rangeValuesConfiguration is not null)
 {
     builder.Services.AddSingleton<IRangeValuesConfiguration>(rangeValuesConfiguration);
 }
+
+builder.Services.AddSingleton<IGameRoomRepository, GameRoomRepository>();
 
 var app = builder.Build();
 

@@ -2,14 +2,15 @@ namespace HiLoGame.UnitTests
 {
     using AutoFixture;
     using FluentAssertions;
+    using HiLoGame.Domain;
+    using HiLoGame.Domain.Interfaces;
     using HiLoGame.Hubs;
     using Microsoft.AspNetCore.SignalR;
-    using Microsoft.Extensions.Configuration;
     using Moq;
 
     public class GameHubTests
     {
-        private readonly Mock<IConfiguration> mockConfiguration;
+        private readonly Mock<IGameRoomRepository> mockRepository;
         private readonly Mock<IRangeValuesConfiguration> mockRangeValuesConfiguration;
         private readonly Mock<IHubCallerClients> mockHubCallerClients;
         private readonly Mock<IGroupManager> mockGroupManager;
@@ -23,10 +24,31 @@ namespace HiLoGame.UnitTests
         private const int MinValue = 1;
         private const int MaxValue = 100;
 
+        private const string RoomName = "LP_ROOM";
+        private const string PlayerId = "18";
+        private const string PlayerName = "LP";
+
         public GameHubTests()
         {
             this.fixture = new Fixture();
-            this.mockConfiguration = new Mock<IConfiguration>();
+            this.mockRepository = new Mock<IGameRoomRepository>();
+
+            this.mockRepository
+                .Setup(r => r.TryAddPlayer(It.IsAny<GameRoom>(), It.IsAny<Player>()))
+                .Returns(true);
+
+            var rooms = this.GenerateRooms();
+
+            var room = rooms.First();
+
+            this.mockRepository
+                .Setup(r => r.GetAll())
+                .Returns(rooms);
+
+            this.mockRepository
+                .Setup(r => r.GetRoomById(It.IsAny<string>()))
+                .Returns(room);
+
             this.mockRangeValuesConfiguration = new Mock<IRangeValuesConfiguration>();
 
             this.mockRangeValuesConfiguration
@@ -62,7 +84,7 @@ namespace HiLoGame.UnitTests
                 .Setup(c => c.Group(It.IsAny<string>()))
                 .Returns(this.mockClientProxy.Object);
 
-            this.gameHub = new GameHub(this.mockConfiguration.Object, this.mockRangeValuesConfiguration.Object)
+            this.gameHub = new GameHub(this.mockRepository.Object, this.mockRangeValuesConfiguration.Object)
             {
                 Context = this.mockHubContext.Object,
                 Groups = this.mockGroupManager.Object,
@@ -71,7 +93,7 @@ namespace HiLoGame.UnitTests
         }
 
         [Fact]
-        public void GameHub_NullConfiguration_ShouldThrowArgumentNullException()
+        public void GameHub_NullRepository_ShouldThrowArgumentNullException()
         {
             // Arrange && Act
             var gameHub = () => new GameHub(null, this.mockRangeValuesConfiguration.Object);
@@ -84,7 +106,7 @@ namespace HiLoGame.UnitTests
         public void GameHub_NullRangeValues_ShouldThrowArgumentNullException()
         {
             // Arrange && Act
-            var gameHub = () => new GameHub(this.mockConfiguration.Object, null);
+            var gameHub = () => new GameHub(this.mockRepository.Object, null);
 
             // Assert
             gameHub.Should().Throw<ArgumentNullException>();
@@ -93,31 +115,32 @@ namespace HiLoGame.UnitTests
         [Fact]
         public async Task GameHub_CreateRoom_ShouldReturnCreatedRoom()
         {
-            // Arrange
-            var playerName = this.fixture.Create<string>();
-            var roomName = this.fixture.Create<string>();
-
-            // Act
-            var createdRoom = await this.gameHub.CreateRoom(roomName, playerName);
+            // Arrange && Act
+            var createdRoom = await this.gameHub.CreateRoom(RoomName, PlayerName);
 
             // Assert
             createdRoom.Should().NotBeNull();
-            createdRoom!.Name.Should().Be(roomName);
-            createdRoom.Players.Should().NotBeNullOrEmpty().And.HaveCount(1);
-            var player = createdRoom.Players.First();
-            player.Name.Should().Be(playerName);
+            createdRoom!.Name.Should().Be(RoomName);
+
+            this.mockRepository
+                .Verify(
+                    x => x.Insert(It.IsAny<GameRoom>()),
+                    Times.Once);
+
+            this.mockRepository
+                .Verify(
+                    x => x.TryAddPlayer(It.IsAny<GameRoom>(), It.IsAny<Player>()),
+                    Times.Once);
         }
 
         [Fact]
         public async Task GameHub_CreateAndJoinRoom_ShouldJoinRoom()
         {
             // Arrange
-            var player1 = this.fixture.Create<string>();
             var player2 = this.fixture.Create<string>();
-            var roomName = this.fixture.Create<string>();
 
             // Act
-            var createdRoom = await this.gameHub.CreateRoom(roomName, player1);
+            var createdRoom = await this.gameHub.CreateRoom(RoomName, PlayerName);
 
             this.mockHubContext
                 .SetupGet(context => context.ConnectionId)
@@ -129,23 +152,36 @@ namespace HiLoGame.UnitTests
 
             // Assert
             result.Should().NotBeNull();
-            result!.Name.Should().Be(roomName);
+            result!.Name.Should().Be(RoomName);
+
+            this.mockRepository
+                .Verify(
+                    x => x.Insert(It.IsAny<GameRoom>()),
+                    Times.Once);
+
+            this.mockRepository
+                .Verify(
+                    x => x.GetRoomById(It.IsAny<string>()),
+                    Times.Once);
+
+            this.mockRepository
+                .Verify(
+                    x => x.TryAddPlayer(It.IsAny<GameRoom>(), It.IsAny<Player>()),
+                    Times.Exactly(2));
         }
 
         [Fact]
         public async Task GameHub_StartGameAndMakeMove_ShouldWinPlayer1()
         {
             // Arrange
-            var player1 = this.fixture.Create<string>();
             var player2 = this.fixture.Create<string>();
-            var roomName = this.fixture.Create<string>();
 
             this.mockHubContext
                 .SetupGet(context => context.ConnectionId)
-                .Returns(player1);
+                .Returns(PlayerName);
 
             // Act
-            var room = await this.gameHub.CreateRoom(roomName, player1);
+            var room = await this.gameHub.CreateRoom(RoomName, PlayerName);
 
             this.mockHubContext
                 .SetupGet(context => context.ConnectionId)
@@ -164,29 +200,42 @@ namespace HiLoGame.UnitTests
             room!.HiLoGame.Should().NotBeNull();
             room.HiLoGame!.MysteryNumber = playerGuess;
 
-            room = await this.gameHub.MakeMove(roomId, playerGuess, player1);
+            room = await this.gameHub.MakeMove(roomId, playerGuess, PlayerName);
 
             // Assert
             room.Should().NotBeNull();
-            room!.Name.Should().Be(roomName);
+            room!.Name.Should().Be(RoomName);
             room.HiLoGame!.Winner.Should().NotBeNull();
-            room.HiLoGame.Winner.Key.Should().Be(player1);
+            room.HiLoGame.Winner.Key.Should().Be(PlayerName);
+
+            this.mockRepository
+                .Verify(
+                    x => x.Insert(It.IsAny<GameRoom>()),
+                    Times.Once);
+
+            this.mockRepository
+                .Verify(
+                    x => x.GetRoomById(It.IsAny<string>()),
+                    Times.AtLeastOnce);
+
+            this.mockRepository
+                .Verify(
+                    x => x.TryAddPlayer(It.IsAny<GameRoom>(), It.IsAny<Player>()),
+                    Times.Exactly(2));
         }
 
         [Fact]
         public async Task GameHub_StartGameAndMakeMove_ShouldBePlayer2Turn()
         {
             // Arrange
-            var player1 = this.fixture.Create<string>();
             var player2 = this.fixture.Create<string>();
-            var roomName = this.fixture.Create<string>();
 
             this.mockHubContext
                 .SetupGet(context => context.ConnectionId)
-                .Returns(player1);
+                .Returns(PlayerName);
 
             // Act
-            var room = await this.gameHub.CreateRoom(roomName, player1);
+            var room = await this.gameHub.CreateRoom(RoomName, PlayerName);
 
             this.mockHubContext
                 .SetupGet(context => context.ConnectionId)
@@ -204,12 +253,46 @@ namespace HiLoGame.UnitTests
             room.Should().NotBeNull();
             room!.HiLoGame.Should().NotBeNull();
 
-            room = await this.gameHub.MakeMove(roomId, playerGuess, player1);
+            room = await this.gameHub.MakeMove(roomId, playerGuess, PlayerName);
 
             // Assert
             room.Should().NotBeNull();
-            room!.Name.Should().Be(roomName);
-            room.HiLoGame!.CurrentPlayerId.Should().NotBeNull().And.NotBe(player1);
+            room!.Name.Should().Be(RoomName);
+
+            this.mockRepository
+                .Verify(
+                    x => x.Insert(It.IsAny<GameRoom>()),
+                    Times.Once);
+
+            this.mockRepository
+                .Verify(
+                    x => x.GetRoomById(It.IsAny<string>()),
+                    Times.AtLeastOnce);
+
+            this.mockRepository
+                .Verify(
+                    x => x.TryAddPlayer(It.IsAny<GameRoom>(), It.IsAny<Player>()),
+                    Times.Exactly(2));
+        }
+
+        private List<GameRoom> GenerateRooms()
+        {
+            return new List<GameRoom>
+            {
+                new GameRoom(this.fixture.Create<string>(), RoomName)
+                {
+                    Players = new List<Player>
+                    {
+                        new Player(PlayerId, PlayerName)
+                    },
+                    HiLoGame = new HiLoGame
+                    {
+                        CurrentPlayerId = PlayerId,
+                        Player1 = PlayerId,
+                        Winner = new KeyValuePair<string, string>(PlayerName, PlayerId),
+                    }
+                }
+            };
         }
     }
 }
