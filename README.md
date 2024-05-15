@@ -27,6 +27,25 @@ It was also containerized using docker.
 
 Note: The single-player BOT does not have any AI mechanism and will only react based on its inputs (higher/lower).
 
+# Structure
+
+1 - Presentation layer:
+
+Server / Client interaction.
+
+2 - Domain Layer:
+
+Layer responsible for having the models.
+
+3 - Infrastructure layer:
+
+Layer responsible for managing the data repositories by providing methods to add or list the data.
+Note that there is no database and the data will only be available in-memory.
+
+4 - Tests layer:
+
+Layer responsible for having unit tests to the major classes.
+
 # Getting Started:
 
 Running locally using docker:
